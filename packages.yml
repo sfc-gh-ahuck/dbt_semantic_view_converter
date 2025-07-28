@@ -1,6 +1,0 @@
-packages:
-  - git: "https://github.com/sfc-gh-ahuck/dbt_semantic_view_converter.git"
-    revision: main
-    # Alternative if published to dbt Hub:
-    # - package: your-org/dbt_semantic_view_converter
-    #   version: ">=1.0.0" 
