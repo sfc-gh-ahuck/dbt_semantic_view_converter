@@ -1,0 +1,97 @@
+version: 2
+
+semantic_models:
+  - name: orders_semantic_view
+    description: "Order fact table containing transaction data at the order level"
+    model: ref('dim_orders')
+    defaults:
+      agg_time_dimension: order_date
+    
+    entities:
+      - name: order_id
+        type: primary
+        description: "Unique identifier for each order"
+      - name: customer_id
+        type: foreign
+        expr: customer_id
+        description: "Foreign key to customer dimension"
+      - name: location_id
+        type: foreign
+        expr: store_location_id
+        description: "Foreign key to location dimension"
+    
+    dimensions:
+      - name: order_date
+        type: time
+        expr: date_trunc('day', order_date)
+        type_params:
+          time_granularity: day
+        description: "Date when the order was placed"
+      - name: order_status
+        type: categorical
+        description: "Current status of the order"
+      - name: is_large_order
+        type: categorical
+        expr: case when order_total > 100 then true else false end
+        description: "Flag indicating if order value exceeds $100"
+    
+    measures:
+      - name: order_total
+        description: "Total value of the order including taxes"
+        agg: sum
+      - name: order_count
+        description: "Count of individual orders"
+        expr: 1
+        agg: sum
+      - name: avg_order_value
+        description: "Average order value"
+        expr: order_total
+        agg: avg
+      - name: unique_customers
+        description: "Count of unique customers"
+        expr: customer_id
+        agg: count_distinct
+
+  - name: customers_semantic_view
+    description: "Customer dimension table with demographics and segmentation data"
+    model: ref('dim_customers')
+    
+    entities:
+      - name: customer_id
+        type: primary
+        description: "Unique customer identifier"
+    
+    dimensions:
+      - name: customer_name
+        type: categorical
+        expr: full_name
+        description: "Customer's full name"
+      - name: customer_segment
+        type: categorical
+        description: "Customer segment classification"
+      - name: registration_date
+        type: time
+        type_params:
+          time_granularity: day
+        description: "Date when customer registered"
+      - name: country
+        type: categorical
+        description: "Customer's country"
+      - name: age_group
+        type: categorical
+        expr: case 
+               when age < 25 then 'Young'
+               when age between 25 and 50 then 'Middle'
+               else 'Senior'
+               end
+        description: "Customer age group classification"
+    
+    measures:
+      - name: customer_lifetime_value
+        description: "Total lifetime value of customer"
+        agg: sum
+        expr: total_spent
+      - name: customer_count
+        description: "Total number of customers"
+        expr: 1
+        agg: sum 

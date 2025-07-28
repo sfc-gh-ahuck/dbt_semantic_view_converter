@@ -1,0 +1,44 @@
+semantic_models:
+  - name: customers
+    description: "Customer dimension table with demographics and segmentation data"
+    model: ref('dim_customers')
+    
+    entities:
+      - name: customer_id
+        type: primary
+        description: "Unique customer identifier"
+    
+    dimensions:
+      - name: customer_name
+        type: categorical
+        expr: full_name
+        description: "Customer's full name"
+      - name: customer_segment
+        type: categorical
+        description: "Customer segment classification"
+      - name: registration_date
+        type: time
+        type_params:
+          time_granularity: day
+        description: "Date when customer registered"
+      - name: country
+        type: categorical
+        description: "Customer's country"
+      - name: age_group
+        type: categorical
+        expr: case 
+               when age < 25 then 'Young'
+               when age between 25 and 50 then 'Middle'
+               else 'Senior'
+               end
+        description: "Customer age group classification"
+    
+    measures:
+      - name: customer_lifetime_value
+        description: "Total lifetime value of customer"
+        agg: sum
+        expr: total_spent
+      - name: customer_count
+        description: "Total number of customers"
+        expr: 1
+        agg: sum 
