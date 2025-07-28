@@ -2,12 +2,9 @@ name: 'dbt_semantic_view_converter'
 version: '1.0.0'
 config-version: 2
 
-# This dbt package provides a custom materialization for converting
-# dbt semantic models to Snowflake semantic views
-
 require-dbt-version: ">=1.0.0"
 
-profile: 'semantic_view_converter'
+profile: 'integration_tests'
 
 model-paths: ["models"]
 analysis-paths: ["analysis"]
@@ -21,15 +18,19 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+dispatch:
+  - macro_namespace: dbt_utils
+    search_order: ['dbt_semantic_view_converter', 'dbt_utils']
+
 models:
   dbt_semantic_view_converter:
     +materialized: view
+    semantic_views:
+      +materialized: semantic_view
+      +schema: semantic_layer
 
-# Variables for configuration
 vars:
-  # Default database/schema for semantic views (can be overridden)
-  semantic_views_database: "{{ target.database }}"
-  semantic_views_schema: "semantic_layer"
-  
-  # Whether to copy grants when creating semantic views
-  copy_grants: true 
+  dbt_semantic_view_converter:
+    semantic_views_database: "{{ target.database }}"
+    semantic_views_schema: "semantic_layer"
+    copy_grants: true 
