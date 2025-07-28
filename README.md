@@ -1,24 +1,24 @@
-# dbt Semantic Model to Snowflake Semantic View Converter
+# dbt Semantic View Converter
 
-A comprehensive solution for converting dbt semantic models into Snowflake semantic views, available as both a **Python standalone tool** and a **dbt package with custom materialization**.
+A dbt package that provides a custom materialization for creating Snowflake semantic views directly from dbt semantic model configurations.
 
 ## Overview
 
-This project bridges the gap between dbt's Semantic Layer and Snowflake's native semantic views, allowing you to:
-- Transform dbt semantic model definitions into Snowflake-compatible SQL
-- Maintain consistent business logic across different semantic layer implementations
-- Migrate from dbt semantic models to Snowflake semantic views
-- Use native dbt workflows with custom materialization
+This dbt package bridges the gap between dbt's Semantic Layer and Snowflake's native semantic views, allowing you to:
+- Transform dbt semantic model definitions into Snowflake semantic views using native dbt workflows
+- Maintain consistent business logic across your semantic layer
+- Leverage dbt's dependency management, testing, and documentation features
+- Use familiar dbt materialization patterns for semantic views
 
 ## 🚀 Quick Start
 
-### Option 1: dbt Package (Recommended)
+### Installation
 
 Add this package to your dbt project's `packages.yml`:
 
 ```yaml
 packages:
-  - git: "https://github.com/your-org/dbt-semantic-model-to-snowflake-semantic-view-converter.git"
+  - git: "https://github.com/sfc-gh-ahuck/dbt_semantic_view_converter.git"
     revision: main
 ```
 
@@ -27,16 +27,9 @@ Then run:
 dbt deps
 ```
 
-### Option 2: Python Tool
+### Usage
 
-```bash
-pip install -r requirements.txt
-python converter.py input.yml output.sql
-```
-
-## 📦 Using the dbt Package
-
-### 1. Define Semantic Models
+#### 1. Define Semantic Models
 
 Create semantic models in your `schema.yml`:
 
@@ -48,17 +41,24 @@ semantic_models:
     entities:
       - name: order_id
         type: primary
+      - name: customer_id
+        type: foreign
     dimensions:
       - name: order_date
         type: time
         type_params:
           time_granularity: day
+      - name: order_status
+        type: categorical
     measures:
       - name: order_total
         agg: sum
+      - name: order_count
+        expr: 1
+        agg: sum
 ```
 
-### 2. Create Semantic View Models
+#### 2. Create Semantic View Models
 
 Create a model file using the `semantic_view` materialization:
 
@@ -72,13 +72,13 @@ Create a model file using the `semantic_view` materialization:
 SELECT 1 as placeholder
 ```
 
-### 3. Run dbt
+#### 3. Run dbt
 
 ```bash
 dbt run --models orders_semantic_view
 ```
 
-This will create a Snowflake semantic view based on your semantic model definition!
+This creates a Snowflake semantic view based on your semantic model definition!
 
 ## ⚙️ Configuration
 
@@ -94,55 +94,24 @@ vars:
     copy_grants: true
 ```
 
-## 🐍 Using the Python Tool
+### Model-Level Configuration
 
-### Command Line
-
-```bash
-# Convert YAML to SQL
-python converter.py convert input.yml output.sql
-
-# Validate a semantic model
-python converter.py validate input.yml
-
-# Print to stdout
-python converter.py convert input.yml
-```
-
-### Python API
-
-```python
-from dbt_to_snowflake_converter import DBTToSnowflakeConverter
-
-converter = DBTToSnowflakeConverter()
-sql_output = converter.convert_file('semantic_model.yml')
-print(sql_output)
-```
-
-## 📖 Example
-
-### Input (dbt semantic model YAML):
-```yaml
-semantic_models:
-  - name: orders
-    model: ref('dim_orders')
-    entities:
-      - name: order_id
-        type: primary
-      - name: customer_id
-        type: foreign
-    dimensions:
-      - name: order_date
-        type: time
-        time_granularity: day
-    measures:
-      - name: order_total
-        agg: sum
-```
-
-### Output (Snowflake semantic view SQL):
 ```sql
-CREATE SEMANTIC VIEW orders
+{{ config(
+    materialized='semantic_view',
+    schema='my_semantic_layer',
+    database='analytics',
+    tags=['semantic', 'daily']
+) }}
+```
+
+## 📖 Example Output
+
+The package generates Snowflake `CREATE SEMANTIC VIEW` statements like:
+
+```sql
+CREATE OR REPLACE SEMANTIC VIEW analytics.semantic_layer.orders
+  COMMENT = 'Order fact table'
   TABLES (
     orders AS dim_orders
       PRIMARY KEY (order_id)
@@ -155,16 +124,19 @@ CREATE SEMANTIC VIEW orders
     orders.order_total AS order_total
   )
   DIMENSIONS (
-    orders.order_date AS DATE_TRUNC('DAY', order_date)
+    orders.order_date AS DATE_TRUNC('DAY', order_date),
+    orders.order_status AS order_status
   )
   METRICS (
-    orders.total_order_total AS SUM(order_total)
-  );
+    orders.total_order_total AS SUM(order_total),
+    orders.total_count AS COUNT(*)
+  )
+  COPY GRANTS;
 ```
 
 ## 🧪 Testing
 
-Test the dbt package with sample models:
+Test the package with the included example models:
 
 ```bash
 # Run example semantic views
@@ -177,42 +149,63 @@ SHOW SEMANTIC VIEWS;
 ## 📁 Project Structure
 
 ```
-├── dbt_project.yml              # dbt package configuration
+├── dbt_project.yml              # Package configuration
 ├── macros/
 │   ├── materializations/
 │   │   └── semantic_view.sql    # Custom materialization
-│   ├── helpers/                 # Helper macros
-│   └── get_semantic_model_config.sql
+│   ├── helpers/                 # Helper macros for SQL generation
+│   └── *.sql                    # Core conversion logic
 ├── models/
 │   └── semantic_views/          # Example models
-├── examples/                    # Python tool examples
-├── dbt_to_snowflake_converter.py # Python converter
-├── converter.py                 # CLI tool
+├── docs/
+│   └── usage_guide.md          # Detailed documentation
 └── README.md
 ```
 
 ## 🔧 Advanced Usage
 
-### Custom Schema Placement
+### Multiple Semantic Models
+
+Define multiple semantic models and create corresponding view files:
+
+```yaml
+# schema.yml
+semantic_models:
+  - name: orders_semantic_view
+    # ... configuration
+  - name: customers_semantic_view  
+    # ... configuration
+```
+
+```sql
+-- models/semantic_views/orders_semantic_view.sql
+{{ config(materialized='semantic_view') }}
+SELECT 1 as placeholder
+
+-- models/semantic_views/customers_semantic_view.sql
+{{ config(materialized='semantic_view') }}
+SELECT 1 as placeholder
+```
+
+### Custom Schema and Database
 
 ```sql
 {{ config(
     materialized='semantic_view',
-    schema='my_semantic_layer',
-    database='analytics'
+    schema='custom_semantic_layer',
+    database='custom_analytics_db'
 ) }}
 ```
 
-### Multiple Semantic Models
+## 📚 Documentation
 
-You can define multiple semantic models in a single `schema.yml` and create corresponding model files for each.
+For detailed usage instructions, see [docs/usage_guide.md](docs/usage_guide.md).
 
-## ⚠️ Limitations
+## ⚠️ Requirements
 
-- **dbt Package**: Requires Snowflake adapter, dbt >= 1.0.0
-- **Python Tool**: Foreign key relationships require manual target table definition
-- Complex expressions may need manual review
-- Time dimension granularity mapping is approximate
+- dbt >= 1.0.0
+- Snowflake adapter
+- Semantic models defined in your dbt project
 
 ## 🤝 Contributing
 
@@ -222,12 +215,6 @@ You can define multiple semantic models in a single `schema.yml` and create corr
 4. Add tests
 5. Submit a pull request
 
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
 ---
 
-**Choose your workflow:**
-- 🔄 **dbt Package**: Integrated with dbt, automatic builds, native workflows
-- ⚡ **Python Tool**: Standalone conversion, custom pipelines, CLI automation 
+**Transform your dbt semantic models into Snowflake semantic views with native dbt workflows! 🚀** 

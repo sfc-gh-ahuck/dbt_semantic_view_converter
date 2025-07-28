@@ -5,7 +5,7 @@
 1. Add to your `packages.yml`:
 ```yaml
 packages:
-  - git: "https://github.com/your-org/dbt-semantic-model-to-snowflake-semantic-view-converter.git"
+  - git: "https://github.com/sfc-gh-ahuck/dbt_semantic_view_converter.git"
     revision: main
 ```
 
@@ -254,6 +254,42 @@ CREATE OR REPLACE SEMANTIC VIEW analytics.semantic_layer.sales_analysis
   COPY GRANTS;
 ```
 
+## Integration with dbt Workflows
+
+### dbt Docs
+
+Semantic views appear in dbt docs with their descriptions and lineage:
+
+```bash
+dbt docs generate
+dbt docs serve
+```
+
+### dbt Tests
+
+You can add tests to your semantic view models:
+
+```yaml
+models:
+  - name: orders_semantic_view
+    description: "Orders semantic view"
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "1 = 1"  # Custom test logic
+```
+
+### dbt Freshness and Dependencies
+
+Semantic views integrate with dbt's dependency graph:
+
+```bash
+# Run upstream models first, then semantic views
+dbt run --models +orders_semantic_view
+
+# Run only if upstream has changed
+dbt run --models orders_semantic_view --state ./target
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -285,4 +321,19 @@ Check generated SQL without executing:
 ```bash
 dbt compile --models my_semantic_view
 # Check target/compiled/ directory for generated SQL
+```
+
+### Inspect Generated Objects
+
+Check your semantic views in Snowflake:
+```sql
+-- List all semantic views
+SHOW SEMANTIC VIEWS;
+
+-- Describe a specific semantic view
+DESCRIBE SEMANTIC VIEW my_semantic_view;
+
+-- Query semantic view metadata
+SHOW SEMANTIC DIMENSIONS FOR VIEW my_semantic_view;
+SHOW SEMANTIC METRICS FOR VIEW my_semantic_view;
 ``` 
