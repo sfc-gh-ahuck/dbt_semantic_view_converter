@@ -9,3 +9,9 @@ target-path: "target"
 clean-targets:
   - "target"
   - "dbt_packages"
+
+dispatch:
+  - macro_namespace: dbt_semantic_view_converter
+    search_order: ['dbt_semantic_view_converter']
+  - macro_namespace: dbt_utils
+    search_order: ['dbt_semantic_view_converter', 'dbt_utils']

@@ -8,13 +8,13 @@
   {{ log("Creating semantic view: " ~ target_relation) }}
 
   {%- set semantic_model_name = model.name -%}
-  {%- set semantic_model_config = get_semantic_model_config(semantic_model_name) -%}
+  {%- set semantic_model_config = dbt_semantic_view_converter.get_semantic_model_config(semantic_model_name) -%}
   
   {% if not semantic_model_config %}
     {{ exceptions.raise_compiler_error("No semantic model configuration found for model '" ~ semantic_model_name ~ "'. Please define it in your schema.yml file.") }}
   {% endif %}
 
-  {%- set create_semantic_view_sql = generate_semantic_view_sql(semantic_model_config, target_relation) -%}
+  {%- set create_semantic_view_sql = dbt_semantic_view_converter.generate_semantic_view_sql(semantic_model_config, target_relation) -%}
 
   -- Setup
   {{ run_hooks(pre_hooks, inside_transaction=false) }}

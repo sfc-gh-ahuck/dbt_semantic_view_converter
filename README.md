@@ -27,6 +27,8 @@ Then run:
 dbt deps
 ```
 
+**Important:** After installing, make sure to run `dbt deps` and then `dbt parse` to ensure all macros are properly loaded.
+
 ### Usage
 
 #### 1. Define Semantic Models
@@ -146,22 +148,6 @@ dbt run --models semantic_views
 SHOW SEMANTIC VIEWS;
 ```
 
-## 📁 Project Structure
-
-```
-├── dbt_project.yml              # Package configuration
-├── macros/
-│   ├── materializations/
-│   │   └── semantic_view.sql    # Custom materialization
-│   ├── helpers/                 # Helper macros for SQL generation
-│   └── *.sql                    # Core conversion logic
-├── models/
-│   └── semantic_views/          # Example models
-├── docs/
-│   └── usage_guide.md          # Detailed documentation
-└── README.md
-```
-
 ## 🔧 Advanced Usage
 
 ### Multiple Semantic Models
@@ -197,23 +183,46 @@ SELECT 1 as placeholder
 ) }}
 ```
 
+## 🔍 Troubleshooting
+
+### "'get_semantic_model_config' is undefined"
+
+If you encounter this error when importing the package:
+
+1. **Ensure dbt deps is run:** Make sure you've run `dbt deps` after adding the package
+2. **Parse the project:** Run `dbt parse` to load all macros
+3. **Check package installation:** Verify the package appears in `dbt_packages/` directory
+4. **Verify profile:** Ensure your dbt profile is properly configured
+
+### "Invalid enum value: `avg` in enum AggregationType"
+
+dbt's semantic layer doesn't support `avg` aggregation. Use these instead:
+- `sum`, `count`, `count_distinct`, `max`, `min`, `median`, `sum_boolean`
+
+### "No semantic model configuration found"
+
+This error occurs when:
+- The semantic model name doesn't match your model file name
+- The semantic model isn't defined in `schema.yml`
+- The `schema.yml` file isn't in the same directory as your model
+
+### Time Spine Requirements
+
+If you see "The semantic layer requires a time spine model", add this to your project:
+
+```sql
+-- models/time_spine.sql
+{{ config(materialized='table') }}
+{{ dbt_utils.date_spine(
+    datepart="day",
+    start_date="cast('2020-01-01' as date)",
+    end_date="cast('2025-01-01' as date)"
+) }}
+```
+
 ## 📚 Documentation
 
 For detailed usage instructions, see [docs/usage_guide.md](docs/usage_guide.md).
-
-## ⚠️ Requirements
-
-- dbt >= 1.0.0
-- Snowflake adapter
-- Semantic models defined in your dbt project
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
 
 ---
 

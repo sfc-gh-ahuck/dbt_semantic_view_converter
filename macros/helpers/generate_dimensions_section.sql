@@ -32,7 +32,7 @@
     {#- Format long expressions nicely -#}
     {%- set expr_str = expr | string -%}
     {%- if expr_str | length > 60 -%}
-      {%- set expr_lines = wrap_long_expression(expr_str) -%}
+      {%- set expr_lines = dbt_semantic_view_converter.wrap_long_expression(expr_str) -%}
       {%- set dim_definition -%}
 {{ table_alias }}.{{ name }} AS (
 {{ expr_lines }}

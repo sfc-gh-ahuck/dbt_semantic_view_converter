@@ -36,7 +36,7 @@
     {%- endif -%}
     
     {#- Generate cleaner metric names -#}
-    {%- set metric_name = generate_metric_name(name, agg) -%}
+    {%- set metric_name = dbt_semantic_view_converter.generate_metric_name(name, agg) -%}
     
     {%- set metric_definition -%}
 {{ table_alias }}.{{ metric_name }} AS {{ metric_expr }}
