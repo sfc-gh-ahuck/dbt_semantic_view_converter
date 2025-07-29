@@ -1,33 +1,31 @@
 {% macro get_semantic_model_config(model_name) %}
   {#- Get the semantic model configuration for a given model name -#}
   
-  {%- set semantic_models = [] -%}
+  {%- set semantic_model_config = none -%}
   
-  {#- Look through all sources to find semantic models -#}
-  {%- for node in graph.sources.values() -%}
-    {%- if node.resource_type == 'semantic_model' and node.name == model_name -%}
-      {%- do semantic_models.append(node) -%}
-    {%- endif -%}
-  {%- endfor -%}
-  
-  {#- Also check in the current project's manifest for semantic models -#}
-  {%- if project_name in graph.semantic_models -%}
-    {%- for semantic_model_name, semantic_model in graph.semantic_models[project_name].items() -%}
-      {%- if semantic_model.name == model_name -%}
-        {%- do semantic_models.append(semantic_model) -%}
+  {#- First try to find semantic models in the graph.nodes -#}
+  {%- if graph.nodes -%}
+    {%- for node_id, node in graph.nodes.items() -%}
+      {%- if node.resource_type == 'semantic_model' and node.name == model_name -%}
+        {%- set semantic_model_config = node -%}
+        {%- break -%}
       {%- endif -%}
     {%- endfor -%}
   {%- endif -%}
   
-  {#- Alternative approach: look in the manifest directly -#}
-  {%- set ns = namespace(found_model=none) -%}
-  {%- for semantic_model_id, semantic_model in graph.semantic_models.items() -%}
-    {%- if semantic_model.name == model_name -%}
-      {%- set ns.found_model = semantic_model -%}
-      {%- break -%}
+  {#- If not found in nodes, try to look in graph itself for semantic_models -#}
+  {%- if not semantic_model_config -%}
+    {%- if graph.get('semantic_models') -%}
+      {%- for semantic_model_id, semantic_model in graph.semantic_models.items() -%}
+        {%- if semantic_model.name == model_name -%}
+          {%- set semantic_model_config = semantic_model -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
     {%- endif -%}
-  {%- endfor -%}
-  
-  {{ return(ns.found_model) }}
+  {%- endif -%}
+
+  {#- If still not found, return none -#}
+  {{ return(semantic_model_config) }}
 
 {% endmacro %} 
