@@ -6,9 +6,9 @@
   {#- First try to find semantic models in the graph.nodes -#}
   {%- if graph.nodes -%}
     {%- for node_id, node in graph.nodes.items() -%}
+
       {%- if node.resource_type == 'semantic_model' and node.name == model_name -%}
-        {%- set semantic_model_config = node -%}
-        {%- break -%}
+        {{ return(semantic_model_config) }}
       {%- endif -%}
     {%- endfor -%}
   {%- endif -%}
@@ -18,14 +18,13 @@
     {%- if graph.get('semantic_models') -%}
       {%- for semantic_model_id, semantic_model in graph.semantic_models.items() -%}
         {%- if semantic_model.name == model_name -%}
-          {%- set semantic_model_config = semantic_model -%}
-          {%- break -%}
+          {{ return(semantic_model_config) }}
         {%- endif -%}
       {%- endfor -%}
     {%- endif -%}
   {%- endif -%}
 
   {#- If still not found, return none -#}
-  {{ return(semantic_model_config) }}
+  
 
 {% endmacro %} 

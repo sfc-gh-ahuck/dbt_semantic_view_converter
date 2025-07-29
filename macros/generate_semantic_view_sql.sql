@@ -22,9 +22,6 @@
 
 {%- set sql -%}
 CREATE OR REPLACE SEMANTIC VIEW {{ target_relation }}
-{%- if description %}
-  COMMENT = '{{ description | replace("'", "''") }}'
-{%- endif %}
   TABLES (
 {{ tables_sql | indent(4, true) }}
   )
@@ -50,6 +47,9 @@ CREATE OR REPLACE SEMANTIC VIEW {{ target_relation }}
 {%- endif %}
 {%- if copy_grants_flag %}
   COPY GRANTS
+{%- endif %}
+{%- if description %}
+  COMMENT = '{{ description | replace("'", "''") }}'
 {%- endif %}
 {%- endset -%}
 

@@ -16,7 +16,7 @@
       {%- set fact_definition -%}
 {{ table_alias }}.{{ name }} AS {{ expr }}
 {%- if description %}
-  COMMENT '{{ description }}'
+  COMMENT = '{{ description }}'
 {%- endif %}
       {%- endset -%}
       

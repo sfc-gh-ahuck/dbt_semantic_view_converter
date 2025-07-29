@@ -41,7 +41,7 @@
     {%- set metric_definition -%}
 {{ table_alias }}.{{ metric_name }} AS {{ metric_expr }}
 {%- if description %}
-  COMMENT '{{ description }}'
+  COMMENT = '{{ description }}'
 {%- endif %}
     {%- endset -%}
     
